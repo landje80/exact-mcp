@@ -1,8 +1,6 @@
 // Handmatig gecompileerd (CommonJS) uit src/httpApp.ts.
 "use strict";
 const crypto = require("node:crypto");
-const fs = require("node:fs");
-const path = require("node:path");
 const express = require("express");
 const { StreamableHTTPServerTransport } = require("@modelcontextprotocol/sdk/server/streamableHttp.js");
 const { loadConfig } = require("./config.js");
@@ -23,37 +21,6 @@ const { writeTokens } = require("./tokenStore.js");
  *   POST /mcp            - het eigenlijke MCP endpoint (beschermd met MCP_API_KEY)
  *   GET  /health         - simpele statuscheck, geen gevoelige info
  */
-
-// --- TIJDELIJKE DIAGNOSE — mag later weer weg ---
-// Schrijft (vóór loadConfig() kan crashen) een bestand met alleen booleans
-// (nooit de echte geheime waarden) zodat we via Bestandsbeheer kunnen zien
-// of Passenger de "Aangepaste omgevingsvariabelen" wel echt doorgeeft aan
-// het proces.
-try {
-  fs.writeFileSync(
-    path.join(__dirname, "..", "startup-debug.json"),
-    JSON.stringify(
-      {
-        timestamp: new Date().toISOString(),
-        nodeVersion: process.version,
-        cwd: process.cwd(),
-        hasClientId: Boolean(process.env.EXACT_CLIENT_ID),
-        hasClientSecret: Boolean(process.env.EXACT_CLIENT_SECRET),
-        redirectUri: process.env.EXACT_REDIRECT_URI || null,
-        country: process.env.EXACT_COUNTRY || null,
-        allowWrite: process.env.ALLOW_WRITE || null,
-        hasMcpApiKey: Boolean(process.env.MCP_API_KEY),
-        hasAdminSetupKey: Boolean(process.env.ADMIN_SETUP_KEY),
-        port: process.env.PORT || null,
-      },
-      null,
-      2
-    )
-  );
-} catch {
-  // Best effort — mag nooit de app zelf laten crashen.
-}
-// --- EINDE TIJDELIJKE DIAGNOSE ---
 
 const config = loadConfig();
 const client = new ExactClient(config);
