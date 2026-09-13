@@ -1,7 +1,8 @@
-// Handmatig gecompileerd uit src/config.ts (geen tsc nodig op de server —
-// zie het "Waarom staat er een dist/ map" stuk in de README).
-import "dotenv/config";
-import path from "node:path";
+// Handmatig gecompileerd (CommonJS) uit src/config.ts.
+"use strict";
+
+require("dotenv/config");
+const path = require("node:path");
 
 const COUNTRY_HOSTS = {
   nl: "https://start.exactonline.nl",
@@ -22,7 +23,7 @@ function required(name, value) {
   return value;
 }
 
-export function loadConfig() {
+function loadConfig() {
   const country = (process.env.EXACT_COUNTRY || "nl").toLowerCase();
   const baseUrl = COUNTRY_HOSTS[country];
   if (!baseUrl) {
@@ -44,3 +45,5 @@ export function loadConfig() {
     adminSetupKey: process.env.ADMIN_SETUP_KEY || undefined,
   };
 }
+
+module.exports = { loadConfig };

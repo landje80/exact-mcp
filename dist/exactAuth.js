@@ -1,5 +1,7 @@
-// Handmatig gecompileerd uit src/exactAuth.ts.
-export function buildAuthorizationUrl(config, state) {
+// Handmatig gecompileerd (CommonJS) uit src/exactAuth.ts.
+"use strict";
+
+function buildAuthorizationUrl(config, state) {
   const url = new URL(`${config.baseUrl}/api/oauth2/auth`);
   url.searchParams.set("client_id", config.clientId);
   url.searchParams.set("redirect_uri", config.redirectUri);
@@ -22,7 +24,7 @@ async function postForm(url, body) {
   return JSON.parse(text);
 }
 
-export async function exchangeCodeForTokens(config, code) {
+async function exchangeCodeForTokens(config, code) {
   return postForm(`${config.baseUrl}/api/oauth2/token`, {
     grant_type: "authorization_code",
     code,
@@ -32,7 +34,7 @@ export async function exchangeCodeForTokens(config, code) {
   });
 }
 
-export async function refreshTokens(config, refreshToken) {
+async function refreshTokens(config, refreshToken) {
   return postForm(`${config.baseUrl}/api/oauth2/token`, {
     grant_type: "refresh_token",
     refresh_token: refreshToken,
@@ -40,3 +42,5 @@ export async function refreshTokens(config, refreshToken) {
     client_secret: config.clientSecret,
   });
 }
+
+module.exports = { buildAuthorizationUrl, exchangeCodeForTokens, refreshTokens };

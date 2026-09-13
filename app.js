@@ -1,4 +1,4 @@
-// Startbestand voor Plesk Node.js hosting (verwacht standaard "app.js" in de
-// applicatie-hoofdmap). Laadt de gecompileerde HTTP-server uit dist/.
-// Draai eerst "npm run build" zodat dist/httpApp.js bestaat.
-import "./dist/httpApp.js";
+// Startbestand voor Plesk Node.js hosting (CommonJS — voor brede
+// compatibiliteit met Phusion Passenger). Draai "npm install" op de server;
+// dist/ staat al kant-en-klaar gecompileerd in de repository.
+require("./dist/httpApp.js");

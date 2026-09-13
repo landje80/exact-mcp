@@ -1,6 +1,7 @@
-// Handmatig gecompileerd uit src/mcpServer.ts.
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
+// Handmatig gecompileerd (CommonJS) uit src/mcpServer.ts.
+"use strict";
+const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
+const { z } = require("zod");
 
 function toResult(data) {
   return {
@@ -38,7 +39,7 @@ function buildListQuery(args) {
  * Wordt zowel door de lokale stdio-server (index.js) als de HTTP-server
  * (httpApp.js, voor Copilot Studio) gebruikt — één plek voor alle tools.
  */
-export function buildMcpServer(config, client) {
+function buildMcpServer(config, client) {
   const server = new McpServer({
     name: "exact-online-mcp",
     version: "0.1.0",
@@ -203,3 +204,5 @@ export function buildMcpServer(config, client) {
 
   return server;
 }
+
+module.exports = { buildMcpServer };

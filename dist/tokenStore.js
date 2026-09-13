@@ -1,7 +1,8 @@
-// Handmatig gecompileerd uit src/tokenStore.ts.
-import fs from "node:fs";
+// Handmatig gecompileerd (CommonJS) uit src/tokenStore.ts.
+"use strict";
+const fs = require("node:fs");
 
-export function readTokens(tokenStorePath) {
+function readTokens(tokenStorePath) {
   if (!fs.existsSync(tokenStorePath)) return undefined;
   try {
     const raw = fs.readFileSync(tokenStorePath, "utf-8");
@@ -11,9 +12,11 @@ export function readTokens(tokenStorePath) {
   }
 }
 
-export function writeTokens(tokenStorePath, tokens) {
+function writeTokens(tokenStorePath, tokens) {
   fs.writeFileSync(tokenStorePath, JSON.stringify(tokens, null, 2), {
     encoding: "utf-8",
     mode: 0o600,
   });
 }
+
+module.exports = { readTokens, writeTokens };

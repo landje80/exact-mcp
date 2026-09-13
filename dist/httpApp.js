@@ -1,15 +1,28 @@
-// Handmatig gecompileerd uit src/httpApp.ts.
-import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import express from "express";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { loadConfig } from "./config.js";
-import { ExactClient } from "./exactClient.js";
-import { buildMcpServer } from "./mcpServer.js";
-import { buildAuthorizationUrl, exchangeCodeForTokens } from "./exactAuth.js";
-import { writeTokens } from "./tokenStore.js";
+// Handmatig gecompileerd (CommonJS) uit src/httpApp.ts.
+"use strict";
+const crypto = require("node:crypto");
+const fs = require("node:fs");
+const path = require("node:path");
+const express = require("express");
+const { StreamableHTTPServerTransport } = require("@modelcontextprotocol/sdk/server/streamableHttp.js");
+const { loadConfig } = require("./config.js");
+const { ExactClient } = require("./exactClient.js");
+const { buildMcpServer } = require("./mcpServer.js");
+const { buildAuthorizationUrl, exchangeCodeForTokens } = require("./exactAuth.js");
+const { writeTokens } = require("./tokenStore.js");
+
+/**
+ * HTTP-variant van de MCP server, bedoeld om 24/7 te draaien (bv. via Plesk
+ * Node.js hosting) zodat cloud-clients zoals Microsoft Copilot Studio erbij
+ * kunnen — die kunnen geen lokaal stdio-proces starten zoals Claude
+ * Desktop/Code dat wel kan.
+ *
+ * Blootgestelde routes:
+ *   GET  /oauth/login    - start de Exact Online login (beschermd met ADMIN_SETUP_KEY)
+ *   GET  /oauth/callback - vangt de OAuth-callback van Exact op
+ *   POST /mcp            - het eigenlijke MCP endpoint (beschermd met MCP_API_KEY)
+ *   GET  /health         - simpele statuscheck, geen gevoelige info
+ */
 
 // --- TIJDELIJKE DIAGNOSE — mag later weer weg ---
 // Schrijft (vóór loadConfig() kan crashen) een bestand met alleen booleans
@@ -17,7 +30,6 @@ import { writeTokens } from "./tokenStore.js";
 // of Passenger de "Aangepaste omgevingsvariabelen" wel echt doorgeeft aan
 // het proces.
 try {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   fs.writeFileSync(
     path.join(__dirname, "..", "startup-debug.json"),
     JSON.stringify(
@@ -42,19 +54,6 @@ try {
   // Best effort — mag nooit de app zelf laten crashen.
 }
 // --- EINDE TIJDELIJKE DIAGNOSE ---
-
-/**
- * HTTP-variant van de MCP server, bedoeld om 24/7 te draaien (bv. via Plesk
- * Node.js hosting) zodat cloud-clients zoals Microsoft Copilot Studio erbij
- * kunnen — die kunnen geen lokaal stdio-proces starten zoals Claude
- * Desktop/Code dat wel kan.
- *
- * Blootgestelde routes:
- *   GET  /oauth/login    - start de Exact Online login (beschermd met ADMIN_SETUP_KEY)
- *   GET  /oauth/callback - vangt de OAuth-callback van Exact op
- *   POST /mcp            - het eigenlijke MCP endpoint (beschermd met MCP_API_KEY)
- *   GET  /health         - simpele statuscheck, geen gevoelige info
- */
 
 const config = loadConfig();
 const client = new ExactClient(config);

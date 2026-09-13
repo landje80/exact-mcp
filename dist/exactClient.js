@@ -1,8 +1,9 @@
-// Handmatig gecompileerd uit src/exactClient.ts.
-import { readTokens, writeTokens } from "./tokenStore.js";
-import { refreshTokens } from "./exactAuth.js";
+// Handmatig gecompileerd (CommonJS) uit src/exactClient.ts.
+"use strict";
+const { readTokens, writeTokens } = require("./tokenStore.js");
+const { refreshTokens } = require("./exactAuth.js");
 
-export class ExactClient {
+class ExactClient {
   constructor(config) {
     this.config = config;
     this.tokens = readTokens(config.tokenStorePath);
@@ -94,3 +95,5 @@ export class ExactClient {
     return JSON.parse(text);
   }
 }
+
+module.exports = { ExactClient };

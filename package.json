@@ -2,7 +2,6 @@
   "name": "exact-online-mcp",
   "version": "0.1.0",
   "description": "MCP server voor Exact Online (REST API)",
-  "type": "module",
   "main": "dist/index.js",
   "bin": {
     "exact-online-mcp": "dist/index.js"

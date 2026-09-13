@@ -204,6 +204,16 @@ install
 
 Klik na `npm install` op **"App opnieuw opstarten"**.
 
+> **CommonJS, geen ES Modules:** `dist/` en `app.js` zijn bewust in
+> CommonJS (`require`/`module.exports`) geschreven, niet in ES Modules
+> (`import`/`export`). Phusion Passenger — de Node.js-runner die Plesk
+> gebruikt — heeft wisselende/beperkte ondersteuning voor ES Modules en kan
+> daar stuklopen zonder bruikbare foutmelding (alleen een generieke "Web
+> application could not be started"-pagina). CommonJS werkt overal.
+> `src/*.ts` gebruikt nog wel gewone `import`/`export`-syntax (TypeScript
+> compileert dat naar CommonJS dankzij `"module": "CommonJS"` in
+> `tsconfig.json`).
+
 ### 5. Inloggen bij Exact Online
 
 Open in je browser (met je eigen `ADMIN_SETUP_KEY`):
