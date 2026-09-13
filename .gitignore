@@ -1,0 +1,8 @@
+node_modules/
+.env
+tokens.json
+*.log
+
+# dist/ wordt hier BEWUST wél meegecommit/geüpload: op sommige hosting
+# (bv. Plesk-omgevingen met een kapotte npm-commandoconsole) kan tsc niet
+# op de server draaien. Zie README "Waarom staat dist/ in de repo".
