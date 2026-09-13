@@ -73,11 +73,15 @@ app.get("/oauth/callback", async (req, res) => {
 
   try {
     const tokenResponse = await exchangeCodeForTokens(config, code);
-    writeTokens(config.tokenStorePath, {
+    const tokens = {
       accessToken: tokenResponse.access_token,
       refreshToken: tokenResponse.refresh_token,
       expiresAt: Date.now() + Number(tokenResponse.expires_in) * 1000,
-    });
+    };
+    writeTokens(config.tokenStorePath, tokens);
+    // De server draait al (en dus bestaat `client` al) sinds vóór deze
+    // login — zonder dit zou hij de nieuwe tokens pas na een herstart zien.
+    client.setTokens(tokens);
 
     const division = await client.getDivision();
     res.send(

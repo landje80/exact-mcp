@@ -15,6 +15,16 @@ export class ExactClient {
     if (this.tokens) writeTokens(this.config.tokenStorePath, this.tokens);
   }
 
+  /**
+   * Werkt de tokens in het geheugen van deze (mogelijk al langer draaiende)
+   * instantie bij. Nodig na een nieuwe OAuth-login op een server die al
+   * opgestart was: writeTokens() schrijft alleen naar schijf, dit zorgt dat
+   * de actieve instantie ze ook meteen gebruikt zonder herstart.
+   */
+  setTokens(tokens: StoredTokens): void {
+    this.tokens = tokens;
+  }
+
   /** Ensures we have a valid (non-expired) access token, refreshing if needed. */
   private async ensureAccessToken(): Promise<string> {
     if (!this.tokens) {
