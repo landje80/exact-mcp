@@ -226,6 +226,21 @@ Log in bij Exact Online; je wordt teruggestuurd naar `/oauth/callback` dat de
 tokens opslaat op de server. Dit moet je opnieuw doen als het refresh token
 verloopt (na 30 dagen zonder gebruik).
 
+### 5b. Login in leven houden (keep-alive)
+
+Het Exact refresh-token is 30 dagen geldig vanaf uitgifte en wordt bij elk
+gebruik vernieuwd. Wordt de koppeling 30 dagen niet gebruikt, dan verloopt het
+en moet je opnieuw inloggen. Voorkom dat met een geplande taak in Plesk
+(Domeinen → mcp.juvion.nl → **Geplande taken** → type "Een URL ophalen" of
+"Shell-opdracht uitvoeren", bv. wekelijks):
+
+```
+curl -fsS "https://mcp.juvion.nl/keepalive?key=<ADMIN_SETUP_KEY>"
+```
+
+Het antwoord is `{"ok":true,...}`; bij een fout (bv. al verlopen) geeft het
+HTTP 500 en moet je opnieuw inloggen via `/oauth/login`.
+
 ### 6. MCP server toevoegen in Copilot Studio
 
 1. Ga naar je agent → **Tools** → **Add a tool** → **New tool** → **Model

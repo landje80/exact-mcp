@@ -7,6 +7,8 @@ class ExactClient {
   constructor(config) {
     this.config = config;
     this.tokens = readTokens(config.tokenStorePath);
+    /** Lopende refresh, zodat parallelle aanroepen er maar één starten. */
+    this.refreshing = null;
   }
 
   persist() {
@@ -23,26 +25,76 @@ class ExactClient {
     this.tokens = tokens;
   }
 
-  /** Ensures we have a valid (non-expired) access token, refreshing if needed. */
-  async ensureAccessToken() {
+  /**
+   * Neemt tokens van schijf over als die nieuwer zijn dan die in het geheugen
+   * (bv. na een login of een refresh door een andere procesinstantie).
+   */
+  syncFromDisk() {
+    const disk = readTokens(this.config.tokenStorePath);
+    if (disk && (!this.tokens || disk.expiresAt > this.tokens.expiresAt)) {
+      this.tokens = { ...disk, division: disk.division ?? this.tokens?.division };
+    }
+  }
+
+  /**
+   * Ververst het access- en refresh-token nu meteen. Exact roteert het
+   * refresh token bij elk gebruik (en het is 30 dagen geldig vanaf uitgifte),
+   * dus regelmatig aanroepen houdt de login in leven. Parallelle aanroepen
+   * delen één refresh, anders ongeldigt de eerste het token van de tweede.
+   * Geeft het tijdstip (epoch ms) terug waarop het nieuwe access token verloopt.
+   */
+  refreshNow() {
+    if (!this.refreshing) {
+      this.refreshing = this.doRefresh().finally(() => {
+        this.refreshing = null;
+      });
+    }
+    return this.refreshing;
+  }
+
+  async doRefresh() {
+    this.syncFromDisk();
     if (!this.tokens) {
       throw new Error(
-        "Nog niet ingelogd bij Exact Online. Draai eerst `npm run login` om in te loggen."
+        "Nog niet ingelogd bij Exact Online. Open eerst /oauth/login op de server om in te loggen."
       );
     }
 
-    const willExpireSoon = Date.now() > this.tokens.expiresAt - 60_000;
-    if (willExpireSoon) {
-      const refreshed = await refreshTokens(this.config, this.tokens.refreshToken);
-      this.tokens = {
-        ...this.tokens,
-        accessToken: refreshed.access_token,
-        // Exact Online rotates the refresh token on every use — de oude
-        // stopt met werken, dus we moeten de nieuwe meteen opslaan.
-        refreshToken: refreshed.refresh_token,
-        expiresAt: Date.now() + Number(refreshed.expires_in) * 1000,
-      };
-      this.persist();
+    let refreshed;
+    try {
+      refreshed = await refreshTokens(this.config, this.tokens.refreshToken);
+    } catch (err) {
+      // Een andere procesinstantie kan het token net geroteerd hebben:
+      // probeer één keer opnieuw met wat inmiddels op schijf staat.
+      const before = this.tokens.refreshToken;
+      this.syncFromDisk();
+      if (this.tokens.refreshToken === before) throw err;
+      refreshed = await refreshTokens(this.config, this.tokens.refreshToken);
+    }
+
+    this.tokens = {
+      ...this.tokens,
+      accessToken: refreshed.access_token,
+      // Exact Online roteert het refresh token bij elk gebruik — de oude
+      // stopt met werken, dus we moeten de nieuwe meteen opslaan.
+      refreshToken: refreshed.refresh_token,
+      expiresAt: Date.now() + Number(refreshed.expires_in) * 1000,
+    };
+    this.persist();
+    return this.tokens.expiresAt;
+  }
+
+  /** Ensures we have a valid (non-expired) access token, refreshing if needed. */
+  async ensureAccessToken() {
+    this.syncFromDisk();
+    if (!this.tokens) {
+      throw new Error(
+        "Nog niet ingelogd bij Exact Online. Open eerst /oauth/login op de server om in te loggen."
+      );
+    }
+
+    if (Date.now() > this.tokens.expiresAt - 60_000) {
+      await this.refreshNow();
     }
 
     return this.tokens.accessToken;
