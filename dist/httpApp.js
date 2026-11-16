@@ -100,8 +100,8 @@ app.get("/oauth/callback", async (req, res) => {
 //   curl -fsS "https://mcp.juvion.nl/keepalive?key=<ADMIN_SETUP_KEY>"
 app.get("/keepalive", requireSetupKey, async (_req, res) => {
   try {
-    const expiresAt = await client.refreshNow();
-    res.json({ ok: true, accessTokenValidForSeconds: Math.round((expiresAt - Date.now()) / 1000) });
+    const { refreshed, expiresAt } = await client.keepAlive();
+    res.json({ ok: true, refreshed, accessTokenValidForSeconds: Math.round((expiresAt - Date.now()) / 1000) });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     res.status(500).json({ ok: false, error: message });

@@ -95,11 +95,31 @@ export class ExactClient {
       );
     }
 
-    if (Date.now() > this.tokens.expiresAt - 60_000) {
+    // Exact weigert een refresh zolang het access token nog geldig is
+    // ("access_token not expired"), dus pas verversen als het echt verlopen is.
+    if (Date.now() >= this.tokens!.expiresAt) {
       await this.refreshNow();
     }
 
     return this.tokens!.accessToken;
+  }
+
+  /**
+   * Voor de keep-alive: ververst alleen als het access token verlopen is
+   * (Exact staat eerder verversen niet toe). Is het token nog vers, dan is
+   * ook het refresh token vers (ze worden samen uitgegeven), dus niets te doen.
+   */
+  async keepAlive(): Promise<{ refreshed: boolean; expiresAt: number }> {
+    this.syncFromDisk();
+    if (!this.tokens) {
+      throw new Error(
+        "Nog niet ingelogd bij Exact Online. Open eerst /oauth/login op de server om in te loggen."
+      );
+    }
+    if (Date.now() < this.tokens.expiresAt) {
+      return { refreshed: false, expiresAt: this.tokens.expiresAt };
+    }
+    return { refreshed: true, expiresAt: await this.refreshNow() };
   }
 
   /** Resolves the division (administratienummer) to use for API calls. */
