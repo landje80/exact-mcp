@@ -141,7 +141,7 @@ export function buildMcpServer(config: Config, client: ExactClient): McpServer {
 
   server.tool(
     "whoami",
-    "Geeft basisinformatie over de ingelogde Exact Online gebruiker en de huidige division/administratie.",
+    "Geeft basisinformatie over de ingelogde Exact Online gebruiker en de administratie (division) waarop deze server nu werkt (activeDivision). Let op: CurrentDivision in het antwoord is de standaard van de gebruiker in Exact; activeDivision is waar alle tools nu op werken.",
     {},
     async () => {
       try {
@@ -149,7 +149,46 @@ export function buildMcpServer(config: Config, client: ExactClient): McpServer {
           query: { $select: "UserID,UserName,FullName,Email,CurrentDivision" },
           skipDivision: true,
         });
-        return toResult(me);
+        return toResult({ activeDivision: await client.getDivision(), me });
+      } catch (err) {
+        return toErrorResult(err);
+      }
+    }
+  );
+
+  server.tool(
+    "list_divisions",
+    "Toont de beschikbare Exact Online-administraties (divisions, met code en omschrijving) en welke daarvan nu actief is (activeDivision).",
+    {},
+    async () => {
+      try {
+        const activeDivision = await client.getDivision();
+        const data = await client.request<{ d?: { results?: any[] } }>("GET", "system/Divisions");
+        const divisions = (data?.d?.results ?? []).map(({ __metadata, ...rest }) => rest);
+        return toResult({ activeDivision, divisions });
+      } catch (err) {
+        return toErrorResult(err);
+      }
+    }
+  );
+
+  server.tool(
+    "set_division",
+    "Wisselt de actieve Exact Online-administratie (division). Dit geldt voor ALLE volgende aanroepen van alle tools, totdat er opnieuw gewisseld wordt. Gebruik de code uit list_divisions. Controleer na het wisselen de activeDivision, en bevestig bij elke schrijfactie (aanmaken/wijzigen/verwijderen) eerst bij de gebruiker in welke administratie dit gebeurt.",
+    {
+      division: z.coerce.number().int().positive().describe("Code (administratienummer) van de administratie, zie list_divisions."),
+    },
+    async ({ division }) => {
+      try {
+        const data = await client.request<{ d?: { results?: any[] } }>("GET", "system/Divisions");
+        const results = data?.d?.results ?? [];
+        const match = results.find((d) => String(d.Code) === String(division));
+        if (!match) {
+          const available = results.map((d) => `${d.Code} (${d.Description})`).join(", ");
+          return toErrorResult(new Error(`Administratie ${division} niet gevonden. Beschikbaar: ${available}`));
+        }
+        client.setActiveDivision(division);
+        return toResult({ activeDivision: String(division), description: match.Description });
       } catch (err) {
         return toErrorResult(err);
       }

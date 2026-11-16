@@ -100,7 +100,10 @@ Herstart Claude Desktop / Claude Code na het toevoegen.
 
 **Altijd beschikbaar (lezen):**
 
-- `whoami` — huidige gebruiker + division
+- `whoami` — huidige gebruiker + actieve administratie (`activeDivision`)
+- `list_divisions` — beschikbare administraties en welke actief is
+- `set_division` — wisselt de actieve administratie (geldt voor alle volgende
+  aanroepen en blijft bewaard in `tokens.json`; gaat voor op `EXACT_DIVISION`)
 - `list_accounts`, `list_contacts`, `list_items`, `list_gl_accounts`,
   `list_sales_invoices`, `list_purchase_invoices`, `list_sales_orders`
   (elk met optionele `top` / `filter` / `select` / `orderby` parameters,

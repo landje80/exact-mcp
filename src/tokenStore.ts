@@ -7,6 +7,8 @@ export interface StoredTokens {
   expiresAt: number;
   /** Current division (administratienummer), cached after first lookup. */
   division?: string;
+  /** Door de gebruiker (via set_division) gekozen administratie; gaat voor op `division`. */
+  activeDivision?: string;
 }
 
 export function readTokens(tokenStorePath: string): StoredTokens | undefined {

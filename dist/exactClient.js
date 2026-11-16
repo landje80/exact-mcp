@@ -34,6 +34,26 @@ class ExactClient {
     if (disk && (!this.tokens || disk.expiresAt > this.tokens.expiresAt)) {
       this.tokens = { ...disk, division: disk.division ?? this.tokens?.division };
     }
+    // De gekozen administratie kan door een andere procesinstantie gewisseld zijn.
+    if (disk?.activeDivision && this.tokens) {
+      this.tokens.activeDivision = disk.activeDivision;
+    }
+  }
+
+  /**
+   * Kiest de administratie (division) waarop alle volgende aanroepen werken.
+   * Wordt bewaard in tokens.json en gaat boven EXACT_DIVISION en de
+   * standaardadministratie van de gebruiker in Exact.
+   */
+  setActiveDivision(code) {
+    this.syncFromDisk();
+    if (!this.tokens) {
+      throw new Error(
+        "Nog niet ingelogd bij Exact Online. Open eerst /oauth/login op de server om in te loggen."
+      );
+    }
+    this.tokens.activeDivision = String(code);
+    this.persist();
   }
 
   /**
@@ -122,6 +142,8 @@ class ExactClient {
 
   /** Resolves the division (administratienummer) to use for API calls. */
   async getDivision() {
+    this.syncFromDisk();
+    if (this.tokens?.activeDivision) return this.tokens.activeDivision;
     if (this.config.division) return this.config.division;
     if (this.tokens?.division) return this.tokens.division;
 
